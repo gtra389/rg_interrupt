@@ -9,6 +9,8 @@
 
 import time
 import RPi.GPIO as GPIO
+import urllib3
+#from urllib.request import urlopen
 
 BUTTON_PIN = 14   # Use GPIO 14 as a interrupt pin
 rg_id_No = "8001" # Songde North: 8001
@@ -33,7 +35,7 @@ def my_callback(channel):
 def httpPOST(String0, String1, String2, String3):    
     try:
         global timeStamp
-        timeStamp = strftime("%Y%m%d%H%M%S")
+        timeStamp = time.strftime("%Y%m%d%H%M%S")
         url = 'http://ec2-54-175-179-28.compute-1.amazonaws.com/update_general.php?' + \
               'site=Demo&' + \
               'time='+ str(timeStamp)+ \
@@ -46,7 +48,7 @@ def httpPOST(String0, String1, String2, String3):
               '&field1='+str(String1)+ \
               '&field2='+str(String2)+ \
               '&field3='+repr(String3)
-        
+       
         url_TT ='http://data.thinktronltd.com/TCGEMSIS/GETMTDATA.aspx?' + \
               'site=Demo&' + \
               'time='+ str(timeStamp)+ \
@@ -60,16 +62,28 @@ def httpPOST(String0, String1, String2, String3):
               '&field2='+str(String2)+ \
               '&field3='+repr(String3) 
         
-        resp = urlopen(url).read()
-        resp_TT = urlopen(url_TT).read()
-        print(resp)
-        print(resp_TT)
+        #resp = urlopen(url).read()
+        #resp_TT = urlopen(url_TT).read()
+	#print("URL: {}".format(url))
+	
+        http = urllib3.PoolManager()
+        resp = http.request('POST', url)
+        resp_TT = http.request('POST', url_TT)
+
+        print("AWS Statue: {}".format(resp.status))
+        print("TT  Statue: {}".format(resp_TT.status))
         print('------------------------')
     except:
         print('We have an error!')
-        time.sleep(30) # Wait for 30 sec
-        resp = urlopen(url).read()
-        print(resp)
+        time.sleep(5) # Wait for 30 sec
+        #resp = urlopen(url).read()
+        #print(resp)
+        http = urllib3.PoolManager()
+        resp = http.request('POST', url)
+        resp_TT = http.request('POST', url_TT)
+
+        print("AWS Statue: {}".format(resp.status))
+        print("TT  Statue: {}".format(resp_TT.status))
         print('------------------------')
 
 
@@ -84,7 +98,7 @@ try:
     while rebootFlag:
         data1 = 0 
         data2 = 0
-        httpPOST(rg_id_No, data1, data2, "Reboot")
+        httpPOST(rg_id_No, data1, data2, 'Reboot')
         rebootFlag = False
 
     while True:
